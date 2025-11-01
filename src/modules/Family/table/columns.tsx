@@ -1,8 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Patient } from "../patient.interface";
+import type { Family } from "../family.interface";
+import type { Patient } from "@/modules/Patient/patient.interface";
 
-export const columns: ColumnDef<Patient>[] = [
+export const columns: ColumnDef<Family>[] = [
   {
     accessorKey: "user.fullname",
     header: () => "Nombre",
@@ -16,8 +17,20 @@ export const columns: ColumnDef<Patient>[] = [
     header: () => "Dirreción",
   },
   {
-    accessorKey: "device.serialNumber",
-    header: () => "Dispositivo vinculado",
+    accessorKey: "patients",
+    header: () => "Pacientes registrados",
+    cell: ({ row }) => {
+      const patients = row.getValue("patients") as Patient[];
+      return (
+        <div>
+          {patients?.map((patient) => (
+            <Badge variant="secondary" key={patient.id}>
+              {patient.user.fullname}
+            </Badge>
+          ))}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "user.createdAt",

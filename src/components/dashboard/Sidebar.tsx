@@ -1,156 +1,161 @@
-import type React from "react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
-import { useTheme } from "../../contexts/ThemeContext";
-import {
-  Activity,
-  LogOut,
-  X,
-  Moon,
-  Sun,
-  Home,
-  Users,
-  UsersRound,
-  User,
-  Microchip,
-  Wifi,
-} from "lucide-react";
+import * as React from "react";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { cn } from "../../lib/utils";
-import { useAuthStore } from "@/auth/useAuth";
+import { Separator } from "@/components/ui/separator";
+import {
+  AudioLines,
+  ClipboardCheck,
+  Cpu,
+  LayoutDashboard,
+  Stethoscope,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
-interface SidebarProps {
-  isOpen: boolean;
+interface SidebarProProps {
+  isOpen: boolean; // overlay en mobile
   onClose: () => void;
 }
 
-const navigationItems = [
-  { name: "Dashboard", href: "/", icon: Home },
-  { name: "Doctores", href: "/doctor", icon: UsersRound },
-  { name: "Pacientes", href: "/patients", icon: User },
-  { name: "Familiares", href: "/family", icon: Users },
-  { name: "Datos en tiempo Real", href: "/monitoring", icon: Wifi },
-  { name: "Dispositivos", href: "/devices", icon: Microchip },
+const NAV = [
+  { label: "Inicio", to: "/", icon: LayoutDashboard },
+  { label: "Doctores", to: "/doctor", icon: Stethoscope },
+  { label: "Pacientes", to: "/patients", icon: Users },
+  { label: "Prácticas", to: "/practice", icon: ClipboardCheck },
+  { label: "Evaluaciones", to: "/evaluation", icon: AudioLines },
+  { label: "Dispositivos", to: "/devices", icon: Cpu },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
-  const { theme, toggleTheme } = useTheme();
+const EXPANDED_W = "18rem"; // 72
+const RAIL_W = "5rem"; // 20
 
-  const handleLogout = () => {
-    logout();
-    onClose();
-    navigate("/login");
-  };
+const SidebarPro: React.FC<SidebarProProps> = ({ isOpen, onClose }) => {
+  const location = useLocation();
+  const [expanded, setExpanded] = useState(true); // rail colapsable
+
+  // 🔧 PUBLICA el ancho a una CSS var para que el layout lo use
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--sbw",
+      expanded ? EXPANDED_W : RAIL_W,
+    );
+    return () => {
+      // opcional: limpiar si desmonta
+      document.documentElement.style.removeProperty("--sbw");
+    };
+  }, [expanded]);
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Overlay mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 z-40 bg-background/70 backdrop-blur-sm lg:hidden"
           onClick={onClose}
         />
       )}
 
-      {/* Sidebar */}
-      <div
+      <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r",
+          // Glass sutil
+          "bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60",
+          // Transiciones suaves
+          "transition-[transform,width] duration-300 ease-out",
+          // Comportamiento responsive
+          "lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full",
+          expanded ? "w-72" : "w-20",
+          // Sombra discreta para separación del contenido
+          "shadow-sm",
         )}
+        aria-label="Barra lateral de navegación"
       >
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-sidebar-border">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-sidebar-primary/10 rounded-lg">
-                <Activity className="h-6 w-6 text-sidebar-primary" />
-              </div>
-              <span className="text-lg font-bold text-sidebar-foreground">
-                MedDistrib
-              </span>
+        {/* Encabezado */}
+        <div className="flex h-16 items-center gap-2 px-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/20">
+            <AudioLines className="h-5 w-5 text-primary" />
+          </div>
+          {expanded && (
+            <div className="leading-tight">
+              <p className="text-sm font-semibold tracking-tight">
+                TheraSpeech
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Speech Therapy Suite
+              </p>
             </div>
+          )}
+          <div className="ml-auto">
             <Button
               variant="ghost"
               size="icon"
-              onClick={onClose}
-              className="lg:hidden text-sidebar-foreground hover:bg-sidebar-accent"
+              onClick={() => setExpanded((v) => !v)}
+              aria-label={expanded ? "Colapsar" : "Expandir"}
+              className="hover:bg-muted/70"
             >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
-            {navigationItems.map((item) => {
-              const isActive = location.pathname === item.href;
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={onClose}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Footer */}
-          <div className="p-4 border-t border-sidebar-border space-y-4">
-            {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              onClick={toggleTheme}
-              className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent"
-            >
-              {theme === "light" ? (
-                <Moon className="h-5 w-5" />
+              {expanded ? (
+                <ChevronLeft className="h-5 w-5" />
               ) : (
-                <Sun className="h-5 w-5" />
+                <ChevronRight className="h-5 w-5" />
               )}
-              {theme === "light" ? "Modo Oscuro" : "Modo Claro"}
-            </Button>
-
-            {/* User Info */}
-            {user && (
-              <div className="px-3 py-2 bg-sidebar-accent/50 rounded-lg">
-                <p className="text-sm font-medium text-sidebar-foreground">
-                  {user.fullname}
-                </p>
-                <p className="text-xs text-sidebar-foreground/60">
-                  {
-                    //user.email
-                  }
-                </p>
-              </div>
-            )}
-
-            {/* Logout */}
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10"
-            >
-              <LogOut className="h-5 w-5" />
-              Cerrar Sesión
             </Button>
           </div>
         </div>
-      </div>
+        <Separator className="bg-border/70" />
+
+        {/* Navegación */}
+        <nav className="flex-1 space-y-1 px-2 py-3 overflow-y-auto">
+          {NAV.map(({ label, to, icon: Icon }) => {
+            const active = location.pathname === to;
+            return (
+              <Link
+                key={to}
+                to={to}
+                onClick={onClose}
+                className={cn(
+                  "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium outline-none",
+                  "transition-colors duration-150",
+                  active
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-muted/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/40",
+                )}
+                title={label}
+              >
+                <Icon
+                  className={cn(
+                    "h-5 w-5 shrink-0",
+                    active ? "" : "opacity-90 group-hover:opacity-100",
+                  )}
+                />
+                {expanded && <span className="truncate">{label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <Separator className="bg-border/70" />
+
+        {/* Footer */}
+        <div className="px-3 py-3 text-xs text-muted-foreground">
+          {expanded ? (
+            <p>
+              Sugerencia: usa la tecla{" "}
+              <span className="rounded-md border px-1 py-0.5 text-foreground bg-background/70">
+                /
+              </span>{" "}
+              para buscar.
+            </p>
+          ) : (
+            <p className="text-center">/ buscar</p>
+          )}
+        </div>
+      </aside>
     </>
   );
 };
 
-export default Sidebar;
+export default SidebarPro;
