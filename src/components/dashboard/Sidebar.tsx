@@ -13,20 +13,35 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
+  User,
+  UsersRound,
 } from "lucide-react";
+import { useAuthStore } from "@/auth/useAuth";
 
 interface SidebarProProps {
   isOpen: boolean; // overlay en mobile
   onClose: () => void;
 }
 
-const NAV = [
+const doctorMenu = [
   { label: "Inicio", to: "/", icon: LayoutDashboard },
   { label: "Doctores", to: "/doctor", icon: Stethoscope },
+  { label: "Familiares", to: "/family", icon: Users },
   { label: "Pacientes", to: "/patients", icon: Users },
   { label: "Prácticas", to: "/practice", icon: ClipboardCheck },
   { label: "Evaluaciones", to: "/evaluation", icon: AudioLines },
   { label: "Dispositivos", to: "/devices", icon: Cpu },
+];
+
+const patientMenu = [
+  { label: "Mis datos", to: "/me", icon: User },
+  { label: "Prácticas", to: "/practice", icon: ClipboardCheck },
+  { label: "Evaluaciones", to: "/evaluation", icon: AudioLines },
+];
+
+const familyMenu = [
+  { label: "Familiares", to: "/family/patients", icon: UsersRound },
+  { label: "Prácticas", to: "/practice", icon: ClipboardCheck },
 ];
 
 const EXPANDED_W = "18rem"; // 72
@@ -35,6 +50,7 @@ const RAIL_W = "5rem"; // 20
 const SidebarPro: React.FC<SidebarProProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const [expanded, setExpanded] = useState(true); // rail colapsable
+  const { user } = useAuthStore();
 
   // 🔧 PUBLICA el ancho a una CSS var para que el layout lo use
   useEffect(() => {
@@ -47,6 +63,14 @@ const SidebarPro: React.FC<SidebarProProps> = ({ isOpen, onClose }) => {
       document.documentElement.style.removeProperty("--sbw");
     };
   }, [expanded]);
+
+  if (!(user && user.type)) return;
+  const navigationItems =
+    user?.type === "doctor"
+      ? doctorMenu
+      : user?.type === "patient"
+        ? patientMenu
+        : familyMenu;
 
   return (
     <>
@@ -109,7 +133,7 @@ const SidebarPro: React.FC<SidebarProProps> = ({ isOpen, onClose }) => {
 
         {/* Navegación */}
         <nav className="flex-1 space-y-1 px-2 py-3 overflow-y-auto">
-          {NAV.map(({ label, to, icon: Icon }) => {
+          {navigationItems.map(({ label, to, icon: Icon }) => {
             const active = location.pathname === to;
             return (
               <Link

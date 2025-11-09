@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,8 +16,12 @@ import { sessionService } from "@/modules/Session/data/session.service"; // crea
 import { patientService } from "@/modules/Patient/data/patient.service"; // tu service de pacientes
 import type { Patient } from "@/modules/Patient/patient.interface"; // tu interfaz de paciente
 import type { EvaluationResult } from "./evaluation.interface";
+import { useAuthStore } from "@/auth/useAuth";
 
 export default function SpeechTherapyApp() {
+  const { user } = useAuthStore();
+  const isPatientUser = user?.type === "patient"; // <- bandera clave
+
   const [currentText, setCurrentText] = useState("");
   const [result, setResult] = useState<EvaluationResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -51,28 +53,17 @@ export default function SpeechTherapyApp() {
     },
   });
 
-  useEffect(() => {
-    generateNewText();
-    void loadPatients();
-    return () => dispose();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadPatients = async () => {
-    try {
-      const data = await patientService.findAll();
-      setPatients(data ?? []);
-    } catch {
-      setPatients([]);
-    }
-  };
-
   const texts = [
-    "La comunicación es una de las habilidades más importantes...",
-    "El progreso personal es un viaje único para cada individuo...",
-    "La confianza en uno mismo se construye paso a paso...",
-    "Hablar con claridad es un arte que se perfecciona con el tiempo...",
-    "La perseverancia es la cualidad que distingue a quienes alcanzan sus metas...",
+    "La comunicación es una de las habilidades más importantes que desarrollamos a lo largo de la vida. Cada palabra que dices es valiosa y merece ser escuchada con atención.",
+    "El progreso personal es un viaje único para cada individuo. No importa la velocidad con la que avances, lo importante es que sigas dando pasos hacia adelante.",
+    "La confianza en uno mismo se construye paso a paso. Cada intento de hablar es una oportunidad para crecer y fortalecer tu voz.",
+    "Hablar con claridad es un arte que se perfecciona con el tiempo. Cada práctica, por pequeña que parezca, aporta a tu desarrollo.",
+    "La perseverancia es la cualidad que distingue a quienes alcanzan sus metas. Aunque el camino tenga obstáculos, cada esfuerzo suma a tu progreso.",
+    "Tu voz tiene un valor propio. No se mide por la perfección, sino por la autenticidad con la que expresas lo que piensas y sientes.",
+    "Equivocarse al hablar es parte natural del aprendizaje. Lo importante no es no equivocarse, sino seguir intentándolo con valentía.",
+    "Cada vez que decides hablar, estás eligiendo confiar en ti mismo. Esa decisión es una victoria, aunque el resultado no sea perfecto.",
+    "Respirar profundo antes de hablar te ayuda a encontrar calma. Tu ritmo es tuyo, y no necesitas ajustarlo al de nadie más.",
+    "Tu forma de hablar es única, igual que tu historia. No estás compitiendo con nadie; solo estás construyendo la mejor versión de ti mismo.",
   ];
 
   const generateNewText = () => {
@@ -82,6 +73,34 @@ export default function SpeechTherapyApp() {
     setDurationMs(0);
     recordStartRef.current = null;
   };
+
+  const loadPatients = async () => {
+    // Si el usuario es paciente, no tiene sentido cargar el listado
+    if (isPatientUser) return;
+    try {
+      const data = await patientService.findAll();
+      setPatients(data ?? []);
+    } catch {
+      setPatients([]);
+    }
+  };
+
+  useEffect(() => {
+    generateNewText();
+    void loadPatients();
+
+    // Si es un usuario paciente, fijamos automáticamente el patientId
+    if (isPatientUser && user?.id) {
+      // OJO: si en tu modelo el id del paciente es otro (ej. user.patient.id),
+      // cambia aquí.
+      setPatientId(user.id);
+    }
+
+    return () => {
+      dispose();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPatientUser, user?.id]);
 
   const durationLabel = useMemo(() => {
     if (!durationMs) return "";
@@ -165,19 +184,31 @@ export default function SpeechTherapyApp() {
               Lee el texto, graba y evalúa
             </p>
           </div>
-          <div className="w-56">
-            <Select onValueChange={setPatientId} value={patientId}>
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder="Selecciona paciente" />
-              </SelectTrigger>
-              <SelectContent>
-                {patients.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.user.fullname}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+          <div className="w-56 flex justify-end">
+            {isPatientUser ? (
+              // Vista para paciente logueado: sin selector
+              <div className="text-right">
+                <p className="text-[11px] font-medium">Sesión de paciente</p>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {user?.fullname ?? user?.email ?? "Mi cuenta"}
+                </p>
+              </div>
+            ) : (
+              // Vista normal: selector de paciente
+              <Select onValueChange={setPatientId} value={patientId}>
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="Selecciona paciente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {patients.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.user.fullname}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 

@@ -19,6 +19,7 @@ import { patientService } from "@/modules/Patient/data/patient.service";
 import type { Patient } from "@/modules/Patient/patient.interface";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Navigate } from "react-router-dom";
 
 // =====================
 // Utilidades locales
@@ -71,6 +72,13 @@ export default function DashboardPage() {
 
   const [patients, setPatients] = useState<Patient[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+
+  const redirectTo =
+    user?.type === "patient"
+      ? "/me"
+      : user?.type === "family"
+        ? "/family/patients"
+        : null;
 
   // ------------ Carga ------------
   useEffect(() => {
@@ -295,6 +303,7 @@ export default function DashboardPage() {
     return Array.from(map.values()).slice(0, 3);
   }, [sessions, patients]);
 
+  if (redirectTo) return <Navigate to={redirectTo} replace />;
   // ------------ Render ------------
   if (loading) {
     return (

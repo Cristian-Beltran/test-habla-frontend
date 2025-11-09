@@ -13,6 +13,11 @@ export const patientService = {
     return res.data;
   },
 
+  findUser: async (id: string): Promise<Patient> => {
+    const res = await axios.get(`${BASE_URL}/user/${id}`);
+    return res.data;
+  },
+
   findOne: async (id: string): Promise<Patient> => {
     const res = await axios.get(`${BASE_URL}/${id}`);
     return res.data;

@@ -21,6 +21,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { useAuthStore } from "@/auth/useAuth";
 
 function fmtDate(iso?: string | null) {
   if (!iso) return "—";
@@ -29,9 +30,36 @@ function fmtDate(iso?: string | null) {
   return d.toLocaleString();
 }
 
+// ===== Helpers para CSV =====
+
+function csvEscape(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const str = String(value);
+  if (str.includes('"') || str.includes(",") || str.includes("\n")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+function downloadCsv(filename: string, content: string) {
+  const blob = new Blob([content], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export default function PatientSessionPage() {
   const params = useParams<{ id: string }>();
-  const patientId = params?.id;
+
+  const { user } = useAuthStore();
+  const id = params?.id;
 
   const [loading, setLoading] = useState(true);
   const [reloading, setReloading] = useState(false);
@@ -41,7 +69,12 @@ export default function PatientSessionPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [tests, setTests] = useState<TestItem[]>([]);
 
+  let patientId: string | undefined;
   const loadAll = async () => {
+    let patientData: Patient | undefined;
+    if (user?.id && user?.type == "patient")
+      patientData = await patientService.findUser(user?.id);
+    patientId = id ?? patientData?.id;
     if (!patientId) return;
     setError(null);
     setLoading(true);
@@ -112,6 +145,96 @@ export default function PatientSessionPage() {
     [tests],
   );
 
+  // ===== Exportar CSV =====
+
+  const handleExportCsv = () => {
+    const patientName = patient?.user?.fullname || patient?.id || "paciente";
+
+    const lines: string[] = [];
+
+    // Encabezado
+    lines.push("Reporte de paciente");
+    lines.push(["Paciente", csvEscape(patientName)].join(","));
+    lines.push(["ID paciente", csvEscape(patient?.id ?? "")].join(","));
+    lines.push(["Total sesiones", csvEscape(sessions.length)].join(","));
+    lines.push(["Total registros", csvEscape(totalRecords)].join(","));
+    lines.push(
+      ["Promedio BPM", csvEscape(avgBpm !== null ? avgBpm : "")].join(","),
+    );
+    lines.push(
+      ["Promedio SpO2", csvEscape(avgSpO2 !== null ? avgSpO2 : "")].join(","),
+    );
+    lines.push("");
+
+    // Tests
+    lines.push("Tests");
+    lines.push("Test ID,Fecha,Score,Comentario IA");
+    tests.forEach((t) => {
+      lines.push(
+        [
+          csvEscape(t.id),
+          csvEscape(fmtDate(t.createdAt)),
+          csvEscape(t.score),
+          csvEscape(t.aiComment),
+        ].join(","),
+      );
+    });
+    if (!tests.length) {
+      lines.push("Sin tests registrados,,,");
+    }
+    lines.push("");
+
+    // Sesiones (nivel sesión)
+    lines.push("Sesiones");
+    lines.push("Sesion ID,Paciente ID,Dispositivo,Inicio,Fin,Registros");
+    sessions.forEach((s) => {
+      lines.push(
+        [
+          csvEscape(s.id),
+          csvEscape(s.patient?.id),
+          csvEscape(s.device?.serialNumber ?? ""),
+          csvEscape(fmtDate(s.startedAt)),
+          csvEscape(fmtDate(s.endedAt)),
+          csvEscape(s.records?.length ?? 0),
+        ].join(","),
+      );
+    });
+    if (!sessions.length) {
+      lines.push("Sin sesiones,,,");
+    }
+    lines.push("");
+
+    // Registros detallados
+    lines.push("Registros por sesión");
+    lines.push("Sesion ID,Registro ID,Fecha,Voltaje (V),BPM,SpO2 (%)");
+    sessions.forEach((s) => {
+      (s.records ?? []).forEach((r: SessionData) => {
+        lines.push(
+          [
+            csvEscape(s.id),
+            csvEscape(r.id),
+            csvEscape(fmtDate(r.recordedAt)),
+            csvEscape(r.pressureVolt ?? ""),
+            csvEscape(r.bpm ?? ""),
+            csvEscape(r.spo2 ?? ""),
+          ].join(","),
+        );
+      });
+    });
+    if (!sessions.some((s) => s.records?.length)) {
+      lines.push("Sin registros,,,");
+    }
+
+    const content = lines.join("\n");
+    const filename = `reporte_paciente_${patientName
+      .replace(/\s+/g, "_")
+      .toLowerCase()}.csv`;
+
+    downloadCsv(filename, content);
+  };
+
+  // ===== Render =====
+
   if (loading) {
     return (
       <div className="min-h-screen p-6">
@@ -148,7 +271,7 @@ export default function PatientSessionPage() {
     <div className="min-h-screen p-6">
       <div className="mx-auto max-w-5xl space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-xl font-semibold">
               Sesiones & Tests —{" "}
@@ -161,24 +284,34 @@ export default function PatientSessionPage() {
               evaluación
             </p>
           </div>
-          <Button
-            onClick={handleReload}
-            variant="outline"
-            size="sm"
-            disabled={reloading}
-          >
-            {reloading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Actualizando…
-              </>
-            ) : (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Actualizar
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleExportCsv}
+              variant="secondary"
+              size="sm"
+              disabled={loading}
+            >
+              Exportar CSV
+            </Button>
+            <Button
+              onClick={handleReload}
+              variant="outline"
+              size="sm"
+              disabled={reloading}
+            >
+              {reloading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Actualizando…
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Actualizar
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* KPIs */}
