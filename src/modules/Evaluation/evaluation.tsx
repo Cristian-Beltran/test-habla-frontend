@@ -54,16 +54,25 @@ export default function SpeechTherapyApp() {
   });
 
   const texts = [
-    "La comunicación es una de las habilidades más importantes que desarrollamos a lo largo de la vida. Cada palabra que dices es valiosa y merece ser escuchada con atención.",
-    "El progreso personal es un viaje único para cada individuo. No importa la velocidad con la que avances, lo importante es que sigas dando pasos hacia adelante.",
-    "La confianza en uno mismo se construye paso a paso. Cada intento de hablar es una oportunidad para crecer y fortalecer tu voz.",
-    "Hablar con claridad es un arte que se perfecciona con el tiempo. Cada práctica, por pequeña que parezca, aporta a tu desarrollo.",
-    "La perseverancia es la cualidad que distingue a quienes alcanzan sus metas. Aunque el camino tenga obstáculos, cada esfuerzo suma a tu progreso.",
-    "Tu voz tiene un valor propio. No se mide por la perfección, sino por la autenticidad con la que expresas lo que piensas y sientes.",
-    "Equivocarse al hablar es parte natural del aprendizaje. Lo importante no es no equivocarse, sino seguir intentándolo con valentía.",
-    "Cada vez que decides hablar, estás eligiendo confiar en ti mismo. Esa decisión es una victoria, aunque el resultado no sea perfecto.",
-    "Respirar profundo antes de hablar te ayuda a encontrar calma. Tu ritmo es tuyo, y no necesitas ajustarlo al de nadie más.",
-    "Tu forma de hablar es única, igual que tu historia. No estás compitiendo con nadie; solo estás construyendo la mejor versión de ti mismo.",
+    "La comunicación es una de las habilidades más importantes que desarrollamos a lo largo de la vida, tanto en el ámbito personal como en el profesional. Cada palabra que dices es valiosa y merece ser escuchada con atención, porque detrás de cada idea hay una intención, una emoción y una historia que te representan. A medida que fortaleces tu capacidad de expresarte, también fortaleces tu presencia, tu credibilidad y tu capacidad de influir positivamente en tu entorno. Hablar no es solo transmitir información; es construir puentes, generar confianza y dejar una marca en quienes te escuchan.",
+
+    "El progreso personal es un viaje único para cada individuo, un proceso que no sigue una línea recta ni se mide con el mismo patrón para todos. No importa la velocidad con la que avances, lo fundamental es que mantengas la disciplina y la disposición de seguir dando pasos hacia adelante, incluso cuando enfrentas dudas o resistencia. Crecer implica aceptar tus tiempos, reconocer tus logros —por pequeños que parezcan— y mantener una visión clara de la persona que quieres llegar a ser. Cada avance, por mínimo que parezca hoy, se convierte en un aporte estratégico para tu futuro.",
+
+    "La confianza en uno mismo se construye paso a paso, con constancia y conciencia. Ninguna seguridad sólida nace de un día para otro; se forma a partir de intentos, errores, ajustes y nuevas oportunidades. Cada intento de hablar es una ocasión para crecer y fortalecer tu voz, para validar que tienes algo que aportar y que tu perspectiva merece espacio. Cuando decides expresarte, aunque sientas inseguridad, estás invirtiendo en tu desarrollo personal y profesional. Ese tipo de valentía tiene un impacto directo en tu capacidad de liderar, colaborar y comunicarte con claridad.",
+
+    "Hablar con claridad es un arte que se perfecciona con el tiempo, con práctica consciente y autocrítica constructiva. No se trata únicamente de pronunciar bien, sino de ordenar tus ideas, transmitir intención y conectar con quien te escucha. Cada práctica, por pequeña que parezca, aporta a tu desarrollo y se acumula como experiencia práctica. Lo que hoy puede parecer un desafío, mañana se convierte en una habilidad natural. La claridad en la comunicación no solo mejora tus conversaciones; también eleva tu capacidad para negociar, presentar ideas y desempeñarte en entornos de alto rendimiento.",
+
+    "La perseverancia es la cualidad que distingue a quienes alcanzan sus metas de quienes se quedan a medio camino. Aunque el camino tenga obstáculos, dudas o momentos de frustración, cada esfuerzo suma a tu progreso. Mantenerte firme pese a los contratiempos envía un mensaje claro: estás comprometido con tu desarrollo y dispuesto a invertir el esfuerzo necesario para mejorar. Quien persevera aprende más, se adapta mejor y desarrolla una resiliencia que se convierte en ventaja competitiva en cualquier contexto.",
+
+    "Tu voz tiene un valor propio, independientemente de la comparación con los demás. No se mide por la perfección, sino por la autenticidad con la que expresas lo que piensas y sientes. Cuando hablas desde un lugar genuino, conectas de manera más profunda y proyectas integridad. La autenticidad genera respeto, fortalece relaciones y permite que tus ideas se reciban con mayor apertura. Reconoce el valor de tu voz, porque es un reflejo directo de tu identidad, tu experiencia y tu capacidad de contribuir en cualquier entorno.",
+
+    "Equivocarse al hablar es parte natural del aprendizaje, y lejos de restarte valor, demuestra que estás dispuesto a mejorar. Lo importante no es evitar cada error, sino seguir intentándolo con valentía y determinación. Cada equivocación te ofrece información útil: te ayuda a corregir, ajustar y avanzar. Las personas que crecen no son las que nunca fallan, sino las que entienden que cada intento es un paso necesario para dominar cualquier habilidad. Hablar, equivocarte y volver a intentarlo es un ciclo de mejora continua.",
+
+    "Cada vez que decides hablar, estás eligiendo confiar en ti mismo, y esa elección tiene un impacto significativo en tu crecimiento personal. Esa decisión es una victoria, aunque el resultado no sea perfecto. Tomar la palabra demuestra liderazgo, seguridad y disposición a participar. Aunque sientas dudas o nervios, expresarte te permite construir presencia, ganar experiencia y fortalecer tu cancha comunicacional. Lo importante no es la perfección inmediata, sino la consistencia de atreverte una y otra vez.",
+
+    "Respirar profundo antes de hablar te ayuda a encontrar calma, claridad y control sobre tu mensaje. Tu ritmo es tuyo, y no necesitas ajustarlo al de nadie más. En un mundo acelerado, dominar tu propio tempo te permite comunicarte con mayor precisión y evitar bloqueos innecesarios. Detenerte unos segundos para respirar no solo te estabiliza; también te da espacio mental para ordenar tus ideas y proyectar seguridad. Ese pequeño hábito puede transformar tu forma de comunicarte y mejorar tu capacidad para manejar situaciones de presión.",
+
+    "Tu forma de hablar es única, igual que tu historia. No estás compitiendo con nadie; estás construyendo tu propia versión de excelencia comunicativa. Cada experiencia que has vivido influye en tu manera de expresarte, y esa singularidad es un activo, no una debilidad. Desarrollar tu voz implica aceptar quién eres, potenciar tus fortalezas y trabajar sobre aquello que deseas mejorar. En lugar de compararte, enfócate en construir una comunicación auténtica, clara y alineada con la persona que quieres proyectar.",
   ];
 
   const generateNewText = () => {
@@ -76,7 +85,6 @@ export default function SpeechTherapyApp() {
 
   const loadPatients = async () => {
     // Si el usuario es paciente, no tiene sentido cargar el listado
-    if (isPatientUser) return;
     try {
       const data = await patientService.findAll();
       setPatients(data ?? []);
@@ -86,21 +94,24 @@ export default function SpeechTherapyApp() {
   };
 
   useEffect(() => {
-    generateNewText();
     void loadPatients();
+  }, []);
 
-    // Si es un usuario paciente, fijamos automáticamente el patientId
+  useEffect(() => {
+    generateNewText();
     if (isPatientUser && user?.id) {
-      // OJO: si en tu modelo el id del paciente es otro (ej. user.patient.id),
-      // cambia aquí.
-      setPatientId(user.id);
+      if (patients) {
+        setPatientId(
+          patients.find((patient) => patient.user.id === user.id)?.id ??
+            user.id,
+        );
+      }
     }
-
     return () => {
       dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPatientUser, user?.id]);
+  }, [isPatientUser, user?.id, patients]);
 
   const durationLabel = useMemo(() => {
     if (!durationMs) return "";

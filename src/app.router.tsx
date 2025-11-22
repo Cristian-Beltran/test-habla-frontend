@@ -12,6 +12,7 @@ import BreathingPractice from "./modules/Practice/practice";
 import AudioAnalysis from "./modules/Evaluation/evaluation";
 import PatientSessionPage from "./modules/Session/session.page";
 import FamilyPatientsPage from "./modules/FamilyPatients/familyPatients.page";
+import TelemetryMonitoringPage from "./modules/Monitorin/monitorin.page";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
       { path: "patients", element: <PatientPage /> },
       { path: "family", element: <FamilyPage /> },
       { path: "practice", element: <BreathingPractice /> },
+      { path: "monitoring", element: <TelemetryMonitoringPage /> },
       // routes
       { path: "session/:id", element: <PatientSessionPage /> },
 

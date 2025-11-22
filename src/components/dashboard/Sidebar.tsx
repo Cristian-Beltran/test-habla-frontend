@@ -15,6 +15,7 @@ import {
   ChevronRight,
   User,
   UsersRound,
+  Wifi,
 } from "lucide-react";
 import { useAuthStore } from "@/auth/useAuth";
 
@@ -31,6 +32,7 @@ const doctorMenu = [
   { label: "Prácticas", to: "/practice", icon: ClipboardCheck },
   { label: "Evaluaciones", to: "/evaluation", icon: AudioLines },
   { label: "Dispositivos", to: "/devices", icon: Cpu },
+  { label: "Monitoreo", to: "/monitoring", icon: Wifi },
 ];
 
 const patientMenu = [
