@@ -26,6 +26,7 @@ export default function SpeechTherapyApp() {
   const [result, setResult] = useState<EvaluationResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [blob, setBlob] = useState<Blob | null>(null);
+  const [transcript, setTranscript] = useState("");
 
   const [patients, setPatients] = useState<Patient[]>([]);
   const [patientId, setPatientId] = useState<string>("");
@@ -164,7 +165,10 @@ export default function SpeechTherapyApp() {
       await sessionService.createTest(patientId, {
         score: evalResult.score,
         aiComment: evalResult.comment,
+        inputText: currentText,
+        userText: data.transcript,
       });
+      setTranscript(data.transcript);
     } catch (e) {
       console.error(e);
     } finally {
@@ -178,6 +182,8 @@ export default function SpeechTherapyApp() {
       await sessionService.createTest(patientId, {
         score: result.score,
         aiComment: result.comment,
+        inputText: currentText,
+        userText: transcript,
       });
     } catch (e) {
       console.error(e);

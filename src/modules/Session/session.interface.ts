@@ -54,10 +54,23 @@ export interface TestItem {
   patient: { id: string };
   score: number; // 0..10 (permite decimales)
   aiComment: string; // comentario de IA
+  userText: string;
+  inputText: string;
   createdAt: string; // ISO
 }
 
 export interface CreateTest {
   score: number; // 0..10
   aiComment: string;
+  userText: string;
+  inputText: string;
+}
+
+// session.interface.ts
+export interface SpeechProgressResult {
+  previousScore: number;
+  currentScore: number;
+  delta: number;
+  improved: boolean;
+  comment: string;
 }

@@ -4,10 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Loader2, RefreshCw } from "lucide-react";
 
 import { sessionService } from "./data/session.service";
-import type { Session, SessionData, TestItem } from "./session.interface";
+import type {
+  Session,
+  SessionData,
+  TestItem,
+  SpeechProgressResult,
+} from "./session.interface";
 import { patientService } from "@/modules/Patient/data/patient.service";
 import type { Patient } from "@/modules/Patient/patient.interface";
 
@@ -57,7 +70,6 @@ function downloadCsv(filename: string, content: string) {
 
 export default function PatientSessionPage() {
   const params = useParams<{ id: string }>();
-
   const { user } = useAuthStore();
   const id = params?.id;
 
@@ -68,6 +80,14 @@ export default function PatientSessionPage() {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [tests, setTests] = useState<TestItem[]>([]);
+
+  // ---- Estado para comparación de tests ----
+  const [selectedTestIds, setSelectedTestIds] = useState<string[]>([]);
+  const [referencePrompt, setReferencePrompt] = useState<string | null>(null);
+  const [isComparing, setIsComparing] = useState(false);
+  const [compareResult, setCompareResult] =
+    useState<SpeechProgressResult | null>(null);
+  const [compareModalOpen, setCompareModalOpen] = useState(false);
 
   let patientId: string | undefined;
   const loadAll = async () => {
@@ -233,6 +253,108 @@ export default function PatientSessionPage() {
     downloadCsv(filename, content);
   };
 
+  // ===== Lógica comparación tests =====
+
+  const selectedTests = useMemo(
+    () => tests.filter((t) => selectedTestIds.includes(t.id)),
+    [tests, selectedTestIds],
+  );
+
+  const toggleSelectTest = (id: string) => {
+    const test = tests.find((t) => t.id === id);
+    if (!test) return;
+
+    const testPrompt = (test.inputText ?? "").trim();
+
+    setSelectedTestIds((prev) => {
+      // Si ya estaba seleccionado, lo quitamos
+      if (prev.includes(id)) {
+        const next = prev.filter((x) => x !== id);
+        // Si ya no queda ninguno, reseteamos referencia
+        if (next.length === 0) {
+          setReferencePrompt(null);
+        }
+        return next;
+      }
+
+      // Si no hay nada seleccionado aún
+      if (prev.length === 0) {
+        setReferencePrompt(testPrompt || null);
+        return [id];
+      }
+
+      // Si ya hay uno o más seleccionados:
+      // - Solo permitimos añadir si coincide con la referencia
+      if (referencePrompt && referencePrompt === testPrompt) {
+        if (prev.length >= 2) return prev; // máximo 2
+        return [...prev, id];
+      }
+
+      // Si no coincide el prompt, simplemente no lo dejamos seleccionar
+      return prev;
+    });
+  };
+
+  const canCompareSamePrompt = useMemo(() => {
+    if (selectedTests.length !== 2) return false;
+    const [a, b] = selectedTests;
+    const t1 = a.inputText?.trim() ?? "";
+    const t2 = b.inputText?.trim() ?? "";
+    if (!t1 || !t2) return false;
+    return t1 === t2;
+  }, [selectedTests]);
+
+  const renderImprovedBadge = (improved: boolean, delta: number) => {
+    if (delta === 0) {
+      return (
+        <Badge variant="outline" className="text-xs">
+          Sin cambios relevantes
+        </Badge>
+      );
+    }
+    if (improved) {
+      return (
+        <Badge className="text-xs">Mejora (+{delta.toFixed(1)} pts)</Badge>
+      );
+    }
+    return (
+      <Badge variant="destructive" className="text-xs">
+        Disminución ({delta.toFixed(1)} pts)
+      </Badge>
+    );
+  };
+
+  const handleCompareTests = async () => {
+    if (selectedTests.length !== 2) return;
+
+    const [t1, t2] = selectedTests;
+    const txt1 = t1.inputText?.trim() ?? "";
+    const txt2 = t2.inputText?.trim() ?? "";
+
+    if (!txt1 || !txt2 || txt1 !== txt2) {
+      return;
+    }
+
+    const [previous, current] = [t1, t2].sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+
+    try {
+      setIsComparing(true);
+      const result = await sessionService.compareTestsTexts(
+        previous.userText,
+        current.userText,
+      );
+      setCompareResult(result);
+      setCompareModalOpen(true);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsComparing(false);
+    }
+  };
+
   // ===== Render =====
 
   if (loading) {
@@ -354,9 +476,30 @@ export default function PatientSessionPage() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Progreso de Tests</CardTitle>
-              <Badge variant="secondary" className="text-xs">
-                {tests.length} test(s)
-              </Badge>
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {tests.length} test(s)
+                  </Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!canCompareSamePrompt || isComparing}
+                    onClick={handleCompareTests}
+                  >
+                    {isComparing && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Comparar progreso
+                  </Button>
+                </div>
+                {referencePrompt && (
+                  <span className="text-[11px] text-muted-foreground">
+                    Solo puedes seleccionar tests que usen la misma frase de
+                    práctica.
+                  </span>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -384,22 +527,47 @@ export default function PatientSessionPage() {
               )}
             </div>
 
-            {/* Listado compacto */}
+            {/* Listado compacto con selección */}
             <div className="space-y-3">
-              {tests.map((t) => (
-                <div key={t.id} className="rounded border p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium">Score: {t.score}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {fmtDate(t.createdAt)}
+              {tests.map((t) => {
+                const selected = selectedTestIds.includes(t.id);
+                const prompt = (t.inputText ?? "").trim();
+                const disabled =
+                  referencePrompt !== null &&
+                  referencePrompt.length > 0 &&
+                  prompt !== referencePrompt &&
+                  !selected;
+
+                return (
+                  <div
+                    key={t.id}
+                    className={`rounded border p-3 flex items-start gap-3 ${
+                      disabled ? "opacity-50" : ""
+                    }`}
+                  >
+                    <Checkbox
+                      checked={selected}
+                      disabled={disabled}
+                      onCheckedChange={() => toggleSelectTest(t.id)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">
+                          Score: {t.score.toFixed(1)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {fmtDate(t.createdAt)}
+                        </div>
+                      </div>
+                      <Separator className="my-2" />
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                        {t.aiComment}
+                      </p>
                     </div>
                   </div>
-                  <Separator className="my-2" />
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                    {t.aiComment}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
               {!tests.length && (
                 <p className="text-xs text-muted-foreground">
                   Cuando generes una evaluación desde el módulo de práctica,
@@ -487,6 +655,68 @@ export default function PatientSessionPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de comparación */}
+      <Dialog open={compareModalOpen} onOpenChange={setCompareModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Comparación de progreso</DialogTitle>
+            <DialogDescription>
+              Resultado de la comparación entre los dos tests seleccionados con
+              la misma frase de referencia.
+            </DialogDescription>
+            {canCompareSamePrompt && (
+              <div className="mt-1">
+                <Badge variant="outline" className="text-[11px]">
+                  Ambos tests usan la misma frase de práctica
+                </Badge>
+              </div>
+            )}
+          </DialogHeader>
+
+          {compareResult ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-1 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Test anterior</span>
+                    <Badge variant="outline" className="text-xs">
+                      {compareResult.previousScore.toFixed(1)}/100
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Test actual</span>
+                    <Badge variant="outline" className="text-xs">
+                      {compareResult.currentScore.toFixed(1)}/100
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end gap-1 text-sm">
+                  <span className="text-muted-foreground">Diferencia</span>
+                  {renderImprovedBadge(
+                    compareResult.improved,
+                    compareResult.delta,
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-md bg-muted p-3 text-sm">
+                <p className="text-muted-foreground">{compareResult.comment}</p>
+              </div>
+
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Resultado orientativo. La interpretación final corresponde al
+                profesional tratante.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
+              No se obtuvo resultado de comparación.
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import type {
   IngestSessionInput,
   IngestSessionResponse,
   Session,
+  SpeechProgressResult,
   TestItem,
 } from "../session.interface";
 
@@ -51,5 +52,16 @@ export const sessionService = {
   getTest: async (patientId: string, testId: string): Promise<TestItem> => {
     const res = await axios.get(`${BASE}/patient/${patientId}/tests/${testId}`);
     return res.data as TestItem;
+  },
+
+  compareTestsTexts: async (
+    previousText: string,
+    currentText: string,
+  ): Promise<SpeechProgressResult> => {
+    const res = await axios.post(`/ia/compare`, {
+      previousText,
+      currentText,
+    });
+    return res.data as SpeechProgressResult;
   },
 };
